@@ -1,0 +1,312 @@
+<html>
+<head>
+<title>XTX_Assignment.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #baacff; font-style: italic;}
+.s1 { color: #c8d3f5;}
+.s2 { color: #b4c2f0;}
+.s3 { color: #7e8eda; font-style: italic;}
+.s4 { color: #baacff;}
+.s5 { color: #7af8ca;}
+.s6 { color: #7fdaff;}
+.s7 { color: #ff9668;}
+</style>
+</head>
+<body bgcolor="#222436">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+XTX_Assignment.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">bisect</span>
+<span class="s0">import </span><span class="s1">itertools</span>
+<span class="s0">import </span><span class="s1">math</span>
+<span class="s0">from </span><span class="s1">operator </span><span class="s0">import </span><span class="s1">itemgetter</span>
+<span class="s0">import </span><span class="s1">pandas </span><span class="s0">as </span><span class="s1">pd</span>
+<span class="s0">import </span><span class="s1">plotly</span><span class="s2">.</span><span class="s1">graph_objects </span><span class="s0">as </span><span class="s1">go</span>
+<span class="s0">from </span><span class="s1">datetime </span><span class="s0">import </span><span class="s1">time</span>
+<span class="s0">import </span><span class="s1">numpy </span><span class="s0">as </span><span class="s1">np</span>
+<span class="s0">from </span><span class="s1">tqdm </span><span class="s0">import </span><span class="s1">tqdm</span>
+<span class="s0">from </span><span class="s1">plotly</span><span class="s2">.</span><span class="s1">subplots </span><span class="s0">import </span><span class="s1">make_subplots</span>
+
+<span class="s3"># CSVs to DFs - Change File Paths Here -</span>
+<span class="s1">bta_md_df </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s5">'/Users/benjoergens/Desktop/BTAUSD_md.csv'</span><span class="s2">)</span>
+<span class="s1">bta_trades_df </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s5">'/Users/benjoergens/Desktop/BTAUSD_trades.csv'</span><span class="s2">)</span>
+<span class="s1">gmma_md_df </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s5">'/Users/benjoergens/Desktop/GMMAUSD_md.csv'</span><span class="s2">)</span>
+<span class="s1">gmma_trades_df </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s5">'/Users/benjoergens/Desktop/GMMAUSD_trades.csv'</span><span class="s2">)</span>
+<span class="s1">lmda_md_df </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s5">'/Users/benjoergens/Desktop/LMDAUSD_md.csv'</span><span class="s2">)</span>
+<span class="s1">lmda_trades_df </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s5">'/Users/benjoergens/Desktop/LMDAUSD_trades.csv'</span><span class="s2">)</span>
+<span class="s1">zta_md_df </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s5">'/Users/benjoergens/Desktop/ZTAUSD_md.csv'</span><span class="s2">)</span>
+<span class="s1">zta_trades_df </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s5">'/Users/benjoergens/Desktop/ZTAUSD_trades.csv'</span><span class="s2">)</span>
+<span class="s1">horizon_ticks_df </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s5">'/Users/benjoergens/Desktop/horizon_ticks.csv'</span><span class="s2">)</span>
+<span class="s1">horizon_ticks_lst </span><span class="s4">= </span><span class="s1">horizon_ticks_df</span><span class="s6">[</span><span class="s5">'h_ticks'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">tolist</span><span class="s2">()</span>
+
+
+<span class="s0">class </span><span class="s1">Grapher</span><span class="s4">:</span>
+    <span class="s0">def </span><span class="s1">__init__ </span><span class="s2">(</span><span class="s1">self</span><span class="s2">, </span><span class="s1">select_md_df</span><span class="s2">, </span><span class="s1">select_trades_df</span><span class="s2">, </span><span class="s1">select_instrument_name</span><span class="s2">)</span><span class="s4">:</span>
+
+        <span class="s3"># Find max elapsed md time in hrs</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">md_ts_ms </span><span class="s4">= </span><span class="s1">select_md_df</span><span class="s6">[</span><span class="s5">'ts_ms'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">tolist</span><span class="s2">()</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">min_md_ms </span><span class="s4">= </span><span class="s1">min</span><span class="s2">(</span><span class="s1">self</span><span class="s2">.</span><span class="s1">md_ts_ms</span><span class="s2">)</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">max_md_hrs_elapsed </span><span class="s4">= </span><span class="s1">round</span><span class="s2">((</span><span class="s1">max</span><span class="s2">(</span><span class="s1">self</span><span class="s2">.</span><span class="s1">md_ts_ms</span><span class="s2">) </span><span class="s4">- </span><span class="s1">self</span><span class="s2">.</span><span class="s1">min_md_ms</span><span class="s2">) </span><span class="s4">/ </span><span class="s7">3600000</span><span class="s2">)</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">elapsed_hr_increments </span><span class="s4">= </span><span class="s6">[]</span>
+        <span class="s0">for </span><span class="s1">i </span><span class="s0">in </span><span class="s1">range</span><span class="s2">(</span><span class="s7">0</span><span class="s2">, </span><span class="s1">self</span><span class="s2">.</span><span class="s1">max_md_hrs_elapsed</span><span class="s4">+</span><span class="s7">1</span><span class="s2">)</span><span class="s4">:</span>
+            <span class="s1">self</span><span class="s2">.</span><span class="s1">elapsed_hr_increments</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">i</span><span class="s2">)</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">corresponding_ms_increments </span><span class="s4">= </span><span class="s6">[]</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">elapsed_three_hr_increments </span><span class="s4">= </span><span class="s6">[]</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">elapsed_three_hr_labels </span><span class="s4">= </span><span class="s6">[]</span>
+        <span class="s0">for </span><span class="s1">i </span><span class="s0">in </span><span class="s1">self</span><span class="s2">.</span><span class="s1">elapsed_hr_increments</span><span class="s4">:</span>
+            <span class="s1">self</span><span class="s2">.</span><span class="s1">corresponding_ms_increments</span><span class="s2">.</span><span class="s1">append</span><span class="s2">((</span><span class="s1">i</span><span class="s4">*</span><span class="s7">3600000</span><span class="s2">) </span><span class="s4">+ </span><span class="s1">self</span><span class="s2">.</span><span class="s1">min_md_ms</span><span class="s2">)</span>
+            <span class="s0">if </span><span class="s1">i </span><span class="s4">% </span><span class="s7">3 </span><span class="s4">== </span><span class="s7">0</span><span class="s4">:</span>
+                <span class="s0">if </span><span class="s1">i </span><span class="s4">== </span><span class="s7">48</span><span class="s4">:</span>
+                    <span class="s1">datetime </span><span class="s4">= </span><span class="s1">time</span><span class="s2">(</span><span class="s1">i </span><span class="s4">- </span><span class="s7">48</span><span class="s2">)</span>
+                <span class="s0">elif </span><span class="s1">i </span><span class="s4">&gt; </span><span class="s7">23</span><span class="s4">:</span>
+                    <span class="s1">datetime </span><span class="s4">= </span><span class="s1">time</span><span class="s2">(</span><span class="s1">i </span><span class="s4">- </span><span class="s7">24</span><span class="s2">)</span>
+                <span class="s0">else</span><span class="s4">:</span>
+                    <span class="s1">datetime </span><span class="s4">= </span><span class="s1">time</span><span class="s2">(</span><span class="s1">i</span><span class="s2">)</span>
+                <span class="s1">hour </span><span class="s4">= </span><span class="s1">datetime</span><span class="s2">.</span><span class="s1">hour</span>
+                <span class="s1">self</span><span class="s2">.</span><span class="s1">elapsed_three_hr_increments</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">hour</span><span class="s2">)</span>
+                <span class="s1">self</span><span class="s2">.</span><span class="s1">elapsed_three_hr_labels</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">i</span><span class="s2">)</span>
+            <span class="s0">else</span><span class="s4">:</span>
+                <span class="s1">self</span><span class="s2">.</span><span class="s1">elapsed_three_hr_increments</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s5">''</span><span class="s2">)</span>
+                <span class="s1">self</span><span class="s2">.</span><span class="s1">elapsed_three_hr_labels</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s5">''</span><span class="s2">)</span>
+
+        <span class="s3"># Bids and asks</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">bids </span><span class="s4">= </span><span class="s1">select_md_df</span><span class="s6">[</span><span class="s5">'bid'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">tolist</span><span class="s2">()</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">asks </span><span class="s4">= </span><span class="s1">select_md_df</span><span class="s6">[</span><span class="s5">'ask'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">tolist</span><span class="s2">()</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">min_bid </span><span class="s4">= </span><span class="s1">min</span><span class="s2">(</span><span class="s1">self</span><span class="s2">.</span><span class="s1">bids</span><span class="s2">)</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">max_ask </span><span class="s4">= </span><span class="s1">max</span><span class="s2">(</span><span class="s1">self</span><span class="s2">.</span><span class="s1">asks</span><span class="s2">)</span>
+
+        <span class="s3"># Trade data</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">trades_ts_ms </span><span class="s4">= </span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'ts_ms'</span><span class="s6">]</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">trade_ts_ms_lst </span><span class="s4">= </span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'ts_ms'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">tolist</span><span class="s2">()</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">trade_ids </span><span class="s4">= </span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'trade_id'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">tolist</span><span class="s2">()</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">trade_sizes </span><span class="s4">= </span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'size'</span><span class="s6">]</span>
+
+        <span class="s3"># ID-sorted trade data</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">ts_trades </span><span class="s4">= </span><span class="s1">select_trades_df</span><span class="s2">.</span><span class="s1">sort_values</span><span class="s2">(</span><span class="s5">'trade_id'</span><span class="s2">)</span>
+
+        <span class="s3"># Separate buys and sells</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">buy_px </span><span class="s4">= </span><span class="s6">[]</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">sell_px </span><span class="s4">= </span><span class="s6">[]</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">pos_sizes </span><span class="s4">= </span><span class="s6">[]</span>
+        <span class="s0">for </span><span class="s1">ind </span><span class="s0">in </span><span class="s1">select_trades_df</span><span class="s2">.</span><span class="s1">index</span><span class="s4">:</span>
+            <span class="s0">if </span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'side'</span><span class="s6">][</span><span class="s1">ind</span><span class="s6">] </span><span class="s4">== </span><span class="s5">'B'</span><span class="s4">:</span>
+                <span class="s1">self</span><span class="s2">.</span><span class="s1">buy_px</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'px'</span><span class="s6">][</span><span class="s1">ind</span><span class="s6">]</span><span class="s2">)</span>
+                <span class="s1">self</span><span class="s2">.</span><span class="s1">sell_px</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s5">''</span><span class="s2">)</span>
+            <span class="s0">else</span><span class="s4">:</span>
+                <span class="s1">self</span><span class="s2">.</span><span class="s1">sell_px</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'px'</span><span class="s6">][</span><span class="s1">ind</span><span class="s6">]</span><span class="s2">)</span>
+                <span class="s1">self</span><span class="s2">.</span><span class="s1">buy_px</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s5">''</span><span class="s2">)</span>
+
+        <span class="s3"># Negate sell positions for aggregate position (agg_pos) calcs</span>
+        <span class="s0">for </span><span class="s1">ind </span><span class="s0">in </span><span class="s1">self</span><span class="s2">.</span><span class="s1">ts_trades</span><span class="s2">.</span><span class="s1">index</span><span class="s4">:</span>
+            <span class="s0">if </span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'side'</span><span class="s6">][</span><span class="s1">ind</span><span class="s6">] </span><span class="s4">== </span><span class="s5">'B'</span><span class="s4">:</span>
+                <span class="s1">self</span><span class="s2">.</span><span class="s1">pos_sizes</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'size'</span><span class="s6">][</span><span class="s1">ind</span><span class="s6">]</span><span class="s2">)</span>
+            <span class="s0">else</span><span class="s4">:</span>
+                <span class="s1">self</span><span class="s2">.</span><span class="s1">pos_sizes</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'size'</span><span class="s6">][</span><span class="s1">ind</span><span class="s6">] </span><span class="s4">* -</span><span class="s7">1</span><span class="s2">)</span>
+
+        <span class="s3"># Round up the trade times to match md_ts_ms (round up b/c positions should only change post trade)</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">ordered_times </span><span class="s4">= </span><span class="s1">self</span><span class="s2">.</span><span class="s1">ts_trades</span><span class="s6">[</span><span class="s5">'ts_ms'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">tolist</span><span class="s2">()</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">rnd_ordered_times </span><span class="s4">= </span><span class="s6">[]</span>
+        <span class="s0">for </span><span class="s1">i </span><span class="s0">in </span><span class="s1">self</span><span class="s2">.</span><span class="s1">ordered_times</span><span class="s4">:</span>
+            <span class="s1">self</span><span class="s2">.</span><span class="s1">rnd_ordered_times</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s1">int</span><span class="s2">(</span><span class="s1">math</span><span class="s2">.</span><span class="s1">ceil</span><span class="s2">(</span><span class="s1">i </span><span class="s4">/ </span><span class="s7">100.0</span><span class="s2">)) </span><span class="s4">* </span><span class="s7">100</span><span class="s2">)</span>
+
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">ordered_px </span><span class="s4">= </span><span class="s1">self</span><span class="s2">.</span><span class="s1">ts_trades</span><span class="s6">[</span><span class="s5">'px'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">tolist</span><span class="s2">()</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">side </span><span class="s4">= </span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'side'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">tolist</span><span class="s2">()</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">size </span><span class="s4">= </span><span class="s1">select_trades_df</span><span class="s6">[</span><span class="s5">'size'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">tolist</span><span class="s2">()</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">instrument_name </span><span class="s4">= </span><span class="s1">select_instrument_name</span>
+
+        <span class="s3"># Calculate cumulative agg_pos_sizes</span>
+        <span class="s1">agg_pos_sizes </span><span class="s4">= </span><span class="s1">list</span><span class="s2">(</span><span class="s1">itertools</span><span class="s2">.</span><span class="s1">accumulate</span><span class="s2">(</span><span class="s1">self</span><span class="s2">.</span><span class="s1">pos_sizes</span><span class="s2">))</span>
+        <span class="s3"># Dictionaries for faster lookups</span>
+        <span class="s1">md_dict </span><span class="s4">= </span><span class="s1">dict</span><span class="s2">(</span><span class="s1">zip</span><span class="s2">(</span><span class="s1">select_md_df</span><span class="s6">[</span><span class="s5">'ts_ms'</span><span class="s6">]</span><span class="s2">, </span><span class="s1">zip</span><span class="s2">(</span><span class="s1">select_md_df</span><span class="s6">[</span><span class="s5">'bid'</span><span class="s6">]</span><span class="s2">, </span><span class="s1">select_md_df</span><span class="s6">[</span><span class="s5">'ask'</span><span class="s6">]</span><span class="s2">)))</span>
+        <span class="s1">agg_pos_dict </span><span class="s4">= </span><span class="s1">dict</span><span class="s2">(</span><span class="s1">zip</span><span class="s2">(</span><span class="s1">self</span><span class="s2">.</span><span class="s1">rnd_ordered_times</span><span class="s2">, </span><span class="s1">agg_pos_sizes</span><span class="s2">))</span>
+        <span class="s3"># Initialize mark-to-market data list</span>
+        <span class="s1">mtm_data </span><span class="s4">= </span><span class="s6">[]</span>
+        <span class="s3"># Find smallest key in agg_pos_dict</span>
+        <span class="s1">smallest_key </span><span class="s4">= </span><span class="s1">min</span><span class="s2">(</span><span class="s1">agg_pos_dict</span><span class="s2">.</span><span class="s1">keys</span><span class="s2">())</span>
+        <span class="s3"># Find corresponding agg_pos_sizes values for each ts_ms_value</span>
+        <span class="s0">for </span><span class="s1">ts_ms_value </span><span class="s0">in </span><span class="s1">tqdm</span><span class="s2">(</span><span class="s1">select_md_df</span><span class="s6">[</span><span class="s5">'ts_ms'</span><span class="s6">]</span><span class="s2">, </span><span class="s1">colour</span><span class="s4">=</span><span class="s5">'blue'</span><span class="s2">,</span>
+                                <span class="s1">desc</span><span class="s4">=</span><span class="s5">'Processing ' </span><span class="s4">+ </span><span class="s1">self</span><span class="s2">.</span><span class="s1">instrument_name </span><span class="s4">+ </span><span class="s5">' Aggregate Position Sizes'</span><span class="s2">)</span><span class="s4">:</span>
+            <span class="s3"># Find corresponding agg_pos_sizes value</span>
+            <span class="s0">if </span><span class="s1">ts_ms_value </span><span class="s4">&lt; </span><span class="s1">smallest_key</span><span class="s4">:</span>
+                <span class="s1">agg_pos_size </span><span class="s4">= </span><span class="s7">0</span>
+            <span class="s0">else</span><span class="s4">:</span>
+                <span class="s1">keys </span><span class="s4">= </span><span class="s1">list</span><span class="s2">(</span><span class="s1">agg_pos_dict</span><span class="s2">.</span><span class="s1">keys</span><span class="s2">())</span>
+                <span class="s1">index </span><span class="s4">= </span><span class="s1">bisect</span><span class="s2">.</span><span class="s1">bisect_left</span><span class="s2">(</span><span class="s1">keys</span><span class="s2">, </span><span class="s1">ts_ms_value</span><span class="s2">)</span>
+                <span class="s0">if </span><span class="s1">index </span><span class="s4">&gt; </span><span class="s7">0</span><span class="s4">:</span>
+                    <span class="s1">nearest_key </span><span class="s4">= </span><span class="s1">keys</span><span class="s6">[</span><span class="s1">index </span><span class="s4">- </span><span class="s7">1</span><span class="s6">]</span>
+                    <span class="s1">agg_pos_size </span><span class="s4">= </span><span class="s1">agg_pos_dict</span><span class="s6">[</span><span class="s1">nearest_key</span><span class="s6">]</span>
+                <span class="s0">else</span><span class="s4">:</span>
+                    <span class="s3"># Where no key is less than or equal to ts_ms_value</span>
+                    <span class="s1">agg_pos_size </span><span class="s4">= </span><span class="s7">0</span>
+            <span class="s3"># Store 'ts_ms', 'bids', 'asks', and agg_pos_sizes values</span>
+            <span class="s1">bid</span><span class="s2">, </span><span class="s1">ask </span><span class="s4">= </span><span class="s1">md_dict</span><span class="s2">.</span><span class="s1">get</span><span class="s2">(</span><span class="s1">ts_ms_value</span><span class="s2">, (</span><span class="s0">None</span><span class="s2">, </span><span class="s0">None</span><span class="s2">))</span>
+            <span class="s1">mtm_data</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s6">[</span><span class="s1">ts_ms_value</span><span class="s2">, </span><span class="s1">bid</span><span class="s2">, </span><span class="s1">ask</span><span class="s2">, </span><span class="s1">agg_pos_size</span><span class="s6">]</span><span class="s2">)</span>
+
+        <span class="s3"># Calculate mark-to-market PnL</span>
+        <span class="s1">mtm_pnl_data </span><span class="s4">= </span><span class="s6">[[</span><span class="s1">mtm_data</span><span class="s6">[</span><span class="s7">0</span><span class="s6">][</span><span class="s7">0</span><span class="s6">]</span><span class="s2">, </span><span class="s7">0</span><span class="s6">]]  </span><span class="s3"># Initialize with zero PnL for the first timestamp</span>
+        <span class="s0">for </span><span class="s1">i </span><span class="s0">in </span><span class="s1">tqdm</span><span class="s2">(</span><span class="s1">range</span><span class="s2">(</span><span class="s7">1</span><span class="s2">, </span><span class="s1">len</span><span class="s2">(</span><span class="s1">mtm_data</span><span class="s2">)), </span><span class="s1">colour</span><span class="s4">=</span><span class="s5">'blue'</span><span class="s2">,</span>
+                      <span class="s1">desc</span><span class="s4">=</span><span class="s5">'Computing ' </span><span class="s4">+ </span><span class="s1">self</span><span class="s2">.</span><span class="s1">instrument_name </span><span class="s4">+ </span><span class="s5">' MTM PnL Curve'</span><span class="s2">)</span><span class="s4">:</span>
+            <span class="s1">prev_agg_pos_size </span><span class="s4">= </span><span class="s1">mtm_data</span><span class="s6">[</span><span class="s1">i </span><span class="s4">- </span><span class="s7">1</span><span class="s6">][</span><span class="s7">3</span><span class="s6">]</span>
+            <span class="s3"># Mark to mid, or mark to bid/ask? Practically, it may be easier to mark to mid and add on reserve</span>
+            <span class="s3"># for bid-offer (as many banks/fx traders do), especially if dealing with complex derivatives.</span>
+            <span class="s3"># Here, given simple long/short positions, and the availability of bids/asks, mark to bid/ask should provide</span>
+            <span class="s3"># more realistic and 'conservative' mtm_pnl figures.</span>
+            <span class="s0">if </span><span class="s1">prev_agg_pos_size </span><span class="s4">&gt; </span><span class="s7">0</span><span class="s4">:</span>
+                <span class="s1">mtm_pnl </span><span class="s4">= </span><span class="s1">prev_agg_pos_size </span><span class="s4">* </span><span class="s2">(</span><span class="s1">mtm_data</span><span class="s6">[</span><span class="s1">i</span><span class="s6">][</span><span class="s7">1</span><span class="s6">] </span><span class="s4">- </span><span class="s1">mtm_data</span><span class="s6">[</span><span class="s1">i </span><span class="s4">- </span><span class="s7">1</span><span class="s6">][</span><span class="s7">1</span><span class="s6">]</span><span class="s2">)</span>
+            <span class="s0">elif </span><span class="s1">prev_agg_pos_size </span><span class="s4">&lt; </span><span class="s7">0</span><span class="s4">:</span>
+                <span class="s1">mtm_pnl </span><span class="s4">= </span><span class="s1">prev_agg_pos_size </span><span class="s4">* </span><span class="s2">(</span><span class="s1">mtm_data</span><span class="s6">[</span><span class="s1">i</span><span class="s6">][</span><span class="s7">2</span><span class="s6">] </span><span class="s4">- </span><span class="s1">mtm_data</span><span class="s6">[</span><span class="s1">i </span><span class="s4">- </span><span class="s7">1</span><span class="s6">][</span><span class="s7">2</span><span class="s6">]</span><span class="s2">)</span>
+            <span class="s0">else</span><span class="s4">:</span>
+                <span class="s1">mtm_pnl </span><span class="s4">= </span><span class="s7">0</span>
+            <span class="s1">mtm_pnl_data</span><span class="s2">.</span><span class="s1">append</span><span class="s2">(</span><span class="s6">[</span><span class="s1">mtm_data</span><span class="s6">[</span><span class="s1">i</span><span class="s6">][</span><span class="s7">0</span><span class="s6">]</span><span class="s2">, </span><span class="s1">mtm_pnl </span><span class="s4">+ </span><span class="s1">mtm_pnl_data</span><span class="s6">[</span><span class="s4">-</span><span class="s7">1</span><span class="s6">][</span><span class="s7">1</span><span class="s6">]]</span><span class="s2">)</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">mtm_pnl </span><span class="s4">= </span><span class="s1">list</span><span class="s2">(</span><span class="s1">map</span><span class="s2">(</span><span class="s1">itemgetter</span><span class="s2">(</span><span class="s7">1</span><span class="s2">), </span><span class="s1">mtm_pnl_data</span><span class="s2">))</span>
+        <span class="s5">'''pnl_sum = 0 
+        pnl_count = 0 
+        for i in range(len(self.mtm_pnl)): 
+            pnl_sum += self.mtm_pnl[i] 
+            pnl_count += 1 
+        pnl_mean = pnl_sum/pnl_count 
+        dif_sum = 0 
+        for i in range(len(self.mtm_pnl)): 
+            dif_sqrs = (self.mtm_pnl[i] - pnl_mean) ** 2 
+            dif_sum += dif_sqrs 
+        print(dif_sum) 
+        print(pnl_count) 
+        vol = math.sqrt(dif_sum / pnl_count) 
+        print('Strat vol: ', vol)'''</span>
+
+        <span class="s3"># Calculate margin curve</span>
+        <span class="s3"># Create df with trade times and buy/sell_px columns</span>
+        <span class="s1">trades_ms_px </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">DataFrame</span><span class="s2">(</span><span class="s6">{</span><span class="s5">'trade_id'</span><span class="s4">: </span><span class="s1">self</span><span class="s2">.</span><span class="s1">trade_ids</span><span class="s2">, </span><span class="s5">'ts_ms'</span><span class="s4">: </span><span class="s1">self</span><span class="s2">.</span><span class="s1">trade_ts_ms_lst</span><span class="s2">, </span><span class="s5">'buy_px'</span><span class="s4">: </span><span class="s1">self</span><span class="s2">.</span><span class="s1">buy_px</span><span class="s2">,</span>
+                                     <span class="s5">'sell_px'</span><span class="s4">: </span><span class="s1">self</span><span class="s2">.</span><span class="s1">sell_px</span><span class="s6">}</span><span class="s2">)</span>
+        <span class="s1">trades_ms_px</span><span class="s2">.</span><span class="s1">sort_values</span><span class="s2">(</span><span class="s1">by</span><span class="s4">=</span><span class="s5">'ts_ms'</span><span class="s2">, </span><span class="s1">inplace</span><span class="s4">=</span><span class="s0">True</span><span class="s2">)</span>
+
+        <span class="s1">select_md_dict </span><span class="s4">= </span><span class="s6">{</span><span class="s1">ts_ms</span><span class="s4">: </span><span class="s2">(</span><span class="s1">bid</span><span class="s2">, </span><span class="s1">ask</span><span class="s2">) </span><span class="s0">for </span><span class="s1">ts_ms</span><span class="s2">, </span><span class="s1">bid</span><span class="s2">, </span><span class="s1">ask </span><span class="s0">in</span>
+                          <span class="s1">zip</span><span class="s2">(</span><span class="s1">select_md_df</span><span class="s6">[</span><span class="s5">'ts_ms'</span><span class="s6">]</span><span class="s2">, </span><span class="s1">select_md_df</span><span class="s6">[</span><span class="s5">'bid'</span><span class="s6">]</span><span class="s2">, </span><span class="s1">select_md_df</span><span class="s6">[</span><span class="s5">'ask'</span><span class="s6">]</span><span class="s2">)</span><span class="s6">}</span>
+
+        <span class="s3"># Create method to round to last horizon tick (used to find bid/sell at last horizon tick)</span>
+        <span class="s0">def </span><span class="s1">round_down</span><span class="s2">(</span><span class="s1">x</span><span class="s2">)</span><span class="s4">:</span>
+            <span class="s0">return </span><span class="s1">int</span><span class="s2">(</span><span class="s1">math</span><span class="s2">.</span><span class="s1">floor</span><span class="s2">(</span><span class="s1">x </span><span class="s4">/ </span><span class="s7">100.0</span><span class="s2">)) </span><span class="s4">* </span><span class="s7">100</span>
+
+        <span class="s3"># Initialize time horizon margin dictionary</span>
+        <span class="s1">th_margin_dict </span><span class="s4">= </span><span class="s6">{}</span>
+        <span class="s3"># Calculate total number of iterations for tqdm progress bar</span>
+        <span class="s1">total_iterations </span><span class="s4">= </span><span class="s1">len</span><span class="s2">(</span><span class="s1">trades_ms_px</span><span class="s2">) </span><span class="s4">* </span><span class="s1">len</span><span class="s2">(</span><span class="s1">horizon_ticks_lst</span><span class="s2">)</span>
+        <span class="s3"># Calculate margin for each nth interval</span>
+        <span class="s0">with </span><span class="s1">tqdm</span><span class="s2">(</span><span class="s1">total</span><span class="s4">=</span><span class="s1">total_iterations</span><span class="s2">, </span><span class="s1">colour</span><span class="s4">=</span><span class="s5">'blue'</span><span class="s2">,</span>
+                  <span class="s1">desc</span><span class="s4">=</span><span class="s5">'Computing ' </span><span class="s4">+ </span><span class="s1">self</span><span class="s2">.</span><span class="s1">instrument_name </span><span class="s4">+ </span><span class="s5">' Aggregate Markout Curve'</span><span class="s2">) </span><span class="s0">as </span><span class="s1">pbar</span><span class="s4">:</span>
+            <span class="s0">for </span><span class="s1">trade_id</span><span class="s2">, </span><span class="s1">ts_ms</span><span class="s2">, </span><span class="s1">buy_px</span><span class="s2">, </span><span class="s1">sell_px </span><span class="s0">in </span><span class="s1">trades_ms_px</span><span class="s2">.</span><span class="s1">itertuples</span><span class="s2">(</span><span class="s1">index</span><span class="s4">=</span><span class="s0">False</span><span class="s2">)</span><span class="s4">:</span>
+                <span class="s0">for </span><span class="s1">j </span><span class="s0">in </span><span class="s1">horizon_ticks_lst</span><span class="s4">:</span>
+                    <span class="s1">new_trade_horizon </span><span class="s4">= </span><span class="s1">j </span><span class="s4">+ </span><span class="s1">ts_ms</span>
+                    <span class="s1">rnd_nth </span><span class="s4">= </span><span class="s1">round_down</span><span class="s2">(</span><span class="s1">new_trade_horizon</span><span class="s2">)</span>
+                    <span class="s1">nth_bid</span><span class="s2">, </span><span class="s1">nth_ask </span><span class="s4">= </span><span class="s1">select_md_dict</span><span class="s2">.</span><span class="s1">get</span><span class="s2">(</span><span class="s1">rnd_nth</span><span class="s2">, (</span><span class="s0">None</span><span class="s2">, </span><span class="s0">None</span><span class="s2">))</span>
+                    <span class="s0">if </span><span class="s1">nth_bid </span><span class="s0">is not None and </span><span class="s1">nth_ask </span><span class="s0">is not None</span><span class="s4">:</span>
+                        <span class="s1">margin </span><span class="s4">= </span><span class="s1">float</span><span class="s2">(</span><span class="s1">sell_px</span><span class="s2">) </span><span class="s4">- </span><span class="s1">nth_ask </span><span class="s0">if </span><span class="s1">buy_px </span><span class="s4">== </span><span class="s5">'' </span><span class="s0">else </span><span class="s1">float</span><span class="s2">(</span><span class="s1">buy_px</span><span class="s2">) </span><span class="s4">- </span><span class="s1">nth_ask</span>
+                        <span class="s1">th_margin_dict</span><span class="s6">[</span><span class="s1">new_trade_horizon</span><span class="s6">] </span><span class="s4">= </span><span class="s1">th_margin_dict</span><span class="s2">.</span><span class="s1">get</span><span class="s2">(</span><span class="s1">new_trade_horizon</span><span class="s2">, </span><span class="s7">0</span><span class="s2">) </span><span class="s4">+ </span><span class="s1">margin</span>
+                    <span class="s1">pbar</span><span class="s2">.</span><span class="s1">update</span><span class="s2">(</span><span class="s7">1</span><span class="s2">)  </span><span class="s3"># Update the progress bar for each iter</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">th_margin_df </span><span class="s4">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">DataFrame</span><span class="s2">(</span><span class="s1">list</span><span class="s2">(</span><span class="s1">th_margin_dict</span><span class="s2">.</span><span class="s1">items</span><span class="s2">()),</span>
+                                         <span class="s1">columns</span><span class="s4">=</span><span class="s6">[</span><span class="s5">'th'</span><span class="s2">, </span><span class="s5">'agg_margin'</span><span class="s6">]</span><span class="s2">).</span><span class="s1">sort_values</span><span class="s2">(</span><span class="s1">by</span><span class="s4">=</span><span class="s5">'th'</span><span class="s2">)</span>
+        <span class="s1">self</span><span class="s2">.</span><span class="s1">th_margin_df</span><span class="s2">.</span><span class="s1">reset_index</span><span class="s2">(</span><span class="s1">inplace</span><span class="s4">=</span><span class="s0">True</span><span class="s2">, </span><span class="s1">drop</span><span class="s4">=</span><span class="s0">True</span><span class="s2">)</span>
+
+    <span class="s3"># Plot all curves and buy/sell markers</span>
+    <span class="s0">def </span><span class="s1">plot_md_trades</span><span class="s2">(</span><span class="s1">self</span><span class="s2">)</span><span class="s4">:</span>
+        <span class="s1">print</span><span class="s2">(</span><span class="s5">'Plotting ' </span><span class="s4">+ </span><span class="s1">self</span><span class="s2">.</span><span class="s1">instrument_name </span><span class="s4">+ </span><span class="s5">' chart...'</span><span class="s2">)</span>
+        <span class="s1">fig </span><span class="s4">= </span><span class="s1">go</span><span class="s2">.</span><span class="s1">Figure</span><span class="s2">()</span>
+        <span class="s1">fig </span><span class="s4">= </span><span class="s1">make_subplots</span><span class="s2">(</span><span class="s1">specs</span><span class="s4">=</span><span class="s6">[[{</span><span class="s5">'secondary_y'</span><span class="s4">: </span><span class="s0">True</span><span class="s6">}]]</span><span class="s2">)</span>
+        <span class="s1">fig</span><span class="s6">[</span><span class="s5">'layout'</span><span class="s6">][</span><span class="s5">'yaxis2'</span><span class="s6">][</span><span class="s5">'showgrid'</span><span class="s6">] </span><span class="s4">= </span><span class="s0">False</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">add_trace</span><span class="s2">(</span><span class="s1">go</span><span class="s2">.</span><span class="s1">Scatter</span><span class="s2">(</span><span class="s1">x</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">th_margin_df</span><span class="s6">[</span><span class="s5">'th'</span><span class="s6">]</span><span class="s2">,</span>
+                                 <span class="s1">y</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">th_margin_df</span><span class="s6">[</span><span class="s5">'agg_margin'</span><span class="s6">]</span><span class="s2">,</span>
+                                 <span class="s1">hovertext</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">th_margin_df</span><span class="s6">[</span><span class="s5">'th'</span><span class="s6">]</span><span class="s2">.</span><span class="s1">astype</span><span class="s2">(</span><span class="s1">str</span><span class="s2">),</span>
+                                 <span class="s1">hovertemplate</span><span class="s4">=</span><span class="s5">'&lt;b&gt;Agg Markout&lt;/b&gt;: %{y}' </span><span class="s4">+ </span><span class="s5">'&lt;br&gt;&lt;b&gt;Timestamp&lt;/b&gt;: %{hovertext}'</span><span class="s2">,</span>
+                                 <span class="s1">name</span><span class="s4">=</span><span class="s5">'Agg Markout'</span><span class="s2">,</span>
+                                 <span class="s1">line</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">color</span><span class="s4">=</span><span class="s5">'rgb(93, 252, 138)'</span><span class="s2">, </span><span class="s1">width</span><span class="s4">=</span><span class="s7">2</span><span class="s2">)), </span><span class="s1">secondary_y</span><span class="s4">=</span><span class="s0">True</span><span class="s2">)</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">add_trace</span><span class="s2">(</span><span class="s1">go</span><span class="s2">.</span><span class="s1">Scatter</span><span class="s2">(</span><span class="s1">x</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">md_ts_ms</span><span class="s2">,</span>
+                                 <span class="s1">y</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">mtm_pnl</span><span class="s2">,</span>
+                                 <span class="s1">hovertext</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">md_ts_ms</span><span class="s2">,</span>
+                                 <span class="s1">hovertemplate</span><span class="s4">=</span><span class="s5">'&lt;b&gt;MTM PnL&lt;/b&gt;: %{y}' </span><span class="s4">+ </span><span class="s5">'&lt;br&gt;&lt;b&gt;Timestamp&lt;/b&gt;: %{hovertext}'</span><span class="s2">,</span>
+                                 <span class="s1">name</span><span class="s4">=</span><span class="s5">'MTM PnL'</span><span class="s2">,</span>
+                                 <span class="s1">line</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">color</span><span class="s4">=</span><span class="s5">'rgb(250, 255, 112)'</span><span class="s2">, </span><span class="s1">width</span><span class="s4">=</span><span class="s7">2</span><span class="s2">)))</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">add_trace</span><span class="s2">(</span><span class="s1">go</span><span class="s2">.</span><span class="s1">Scatter</span><span class="s2">(</span><span class="s1">x</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">md_ts_ms</span><span class="s2">,</span>
+                                 <span class="s1">y</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">bids</span><span class="s2">,</span>
+                                 <span class="s1">hovertext</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">md_ts_ms</span><span class="s2">,</span>
+                                 <span class="s1">hovertemplate</span><span class="s4">=</span><span class="s5">'&lt;b&gt;Bid&lt;/b&gt;: %{y}' </span><span class="s4">+ </span><span class="s5">'&lt;br&gt;&lt;b&gt;Timestamp&lt;/b&gt;: %{hovertext}'</span><span class="s2">,</span>
+                                 <span class="s1">name</span><span class="s4">=</span><span class="s5">'Bids'</span><span class="s2">,</span>
+                                 <span class="s1">line</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">color</span><span class="s4">=</span><span class="s5">'rgb(0, 191, 255)'</span><span class="s2">, </span><span class="s1">width</span><span class="s4">=</span><span class="s7">2</span><span class="s2">)))</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">add_trace</span><span class="s2">(</span><span class="s1">go</span><span class="s2">.</span><span class="s1">Scatter</span><span class="s2">(</span><span class="s1">x</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">md_ts_ms</span><span class="s2">,</span>
+                                 <span class="s1">y</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">asks</span><span class="s2">,</span>
+                                 <span class="s1">hovertext</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">md_ts_ms</span><span class="s2">,</span>
+                                 <span class="s1">hovertemplate</span><span class="s4">=</span><span class="s5">'&lt;b&gt;Ask&lt;/b&gt;: %{y}' </span><span class="s4">+ </span><span class="s5">'&lt;br&gt;&lt;b&gt;Timestamp&lt;/b&gt;: %{hovertext}'</span><span class="s2">,</span>
+                                 <span class="s1">name</span><span class="s4">=</span><span class="s5">'Asks'</span><span class="s2">,</span>
+                                 <span class="s1">line</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">color</span><span class="s4">=</span><span class="s5">'rgb(220, 208, 255)'</span><span class="s2">, </span><span class="s1">width</span><span class="s4">=</span><span class="s7">2</span><span class="s2">)))</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">add_trace</span><span class="s2">(</span><span class="s1">go</span><span class="s2">.</span><span class="s1">Scatter</span><span class="s2">(</span><span class="s1">x</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">trades_ts_ms</span><span class="s2">,</span>
+                                 <span class="s1">y</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">buy_px</span><span class="s2">,</span>
+                                 <span class="s1">mode</span><span class="s4">=</span><span class="s5">'markers'</span><span class="s2">,</span>
+                                 <span class="s1">customdata</span><span class="s4">=</span><span class="s1">np</span><span class="s2">.</span><span class="s1">stack</span><span class="s2">((</span><span class="s1">self</span><span class="s2">.</span><span class="s1">trades_ts_ms</span><span class="s2">, </span><span class="s1">self</span><span class="s2">.</span><span class="s1">trade_ids</span><span class="s2">, </span><span class="s1">self</span><span class="s2">.</span><span class="s1">trade_sizes</span><span class="s2">), </span><span class="s1">axis</span><span class="s4">=-</span><span class="s7">1</span><span class="s2">),</span>
+                                 <span class="s1">hovertemplate</span><span class="s4">=</span><span class="s5">'&lt;b&gt;Buy Px&lt;/b&gt;: %{y}' </span><span class="s4">+ </span><span class="s5">'&lt;br&gt;&lt;b&gt;Timestamp&lt;/b&gt;: %{customdata[0]}'</span>
+                                               <span class="s4">+ </span><span class="s5">'&lt;br&gt;&lt;b&gt;Trade ID&lt;/b&gt;: %{customdata[1]}'</span>
+                                               <span class="s4">+ </span><span class="s5">'&lt;br&gt;&lt;b&gt;Trade Size&lt;/b&gt;: %{customdata[2]}'</span><span class="s2">,</span>
+                                 <span class="s1">name</span><span class="s4">=</span><span class="s5">'Buys'</span><span class="s2">,</span>
+                                 <span class="s1">line</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">color</span><span class="s4">=</span><span class="s5">'green'</span><span class="s2">, </span><span class="s1">width</span><span class="s4">=</span><span class="s7">6</span><span class="s2">),</span>
+                                 <span class="s1">marker</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">symbol</span><span class="s4">=</span><span class="s5">&quot;triangle-up&quot;</span><span class="s2">, </span><span class="s1">size</span><span class="s4">=</span><span class="s7">12</span><span class="s2">)))</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">add_trace</span><span class="s2">(</span><span class="s1">go</span><span class="s2">.</span><span class="s1">Scatter</span><span class="s2">(</span><span class="s1">x</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">trades_ts_ms</span><span class="s2">,</span>
+                                 <span class="s1">y</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">sell_px</span><span class="s2">,</span>
+                                 <span class="s1">mode</span><span class="s4">=</span><span class="s5">'markers'</span><span class="s2">,</span>
+                                 <span class="s1">customdata</span><span class="s4">=</span><span class="s1">np</span><span class="s2">.</span><span class="s1">stack</span><span class="s2">((</span><span class="s1">self</span><span class="s2">.</span><span class="s1">trades_ts_ms</span><span class="s2">, </span><span class="s1">self</span><span class="s2">.</span><span class="s1">trade_ids</span><span class="s2">, </span><span class="s1">self</span><span class="s2">.</span><span class="s1">trade_sizes</span><span class="s2">), </span><span class="s1">axis</span><span class="s4">=-</span><span class="s7">1</span><span class="s2">),</span>
+                                 <span class="s1">hovertemplate</span><span class="s4">=</span><span class="s5">'&lt;b&gt;Sell Px&lt;/b&gt;: %{y}' </span><span class="s4">+ </span><span class="s5">'&lt;br&gt;&lt;b&gt;Timestamp&lt;/b&gt;: %{customdata[0]}'</span>
+                                               <span class="s4">+ </span><span class="s5">'&lt;br&gt;&lt;b&gt;Trade ID&lt;/b&gt;: %{customdata[1]}'</span>
+                                               <span class="s4">+ </span><span class="s5">'&lt;br&gt;&lt;b&gt;Trade Size&lt;/b&gt;: %{customdata[2]}'</span><span class="s2">,</span>
+                                 <span class="s1">name</span><span class="s4">=</span><span class="s5">'Sells'</span><span class="s2">,</span>
+                                 <span class="s1">line</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">color</span><span class="s4">=</span><span class="s5">'red'</span><span class="s2">, </span><span class="s1">width</span><span class="s4">=</span><span class="s7">6</span><span class="s2">),</span>
+                                 <span class="s1">marker</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">symbol</span><span class="s4">=</span><span class="s5">&quot;triangle-down&quot;</span><span class="s2">, </span><span class="s1">size</span><span class="s4">=</span><span class="s7">12</span><span class="s2">)))</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">update_layout</span><span class="s2">(</span><span class="s1">template</span><span class="s4">=</span><span class="s5">'plotly_dark'</span><span class="s2">,</span>
+                          <span class="s1">plot_bgcolor</span><span class="s4">=</span><span class="s5">'rgb(13, 14, 15)'</span><span class="s2">,</span>
+                          <span class="s1">paper_bgcolor</span><span class="s4">=</span><span class="s5">'black'</span><span class="s2">,</span>
+                          <span class="s1">title</span><span class="s4">=</span><span class="s2">(</span><span class="s1">self</span><span class="s2">.</span><span class="s1">instrument_name </span><span class="s4">+ </span><span class="s5">' Market Data and Trades'</span><span class="s2">),</span>
+                          <span class="s1">title_x</span><span class="s4">=</span><span class="s7">0.065</span><span class="s2">,</span>
+                          <span class="s1">xaxis</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">rangeselector</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">buttons</span><span class="s4">=</span><span class="s1">list</span><span class="s2">(</span>
+                              <span class="s6">[</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">label</span><span class="s4">=</span><span class="s5">&quot;1hr look-back&quot;</span><span class="s2">, </span><span class="s1">step</span><span class="s4">=</span><span class="s5">'hour'</span><span class="s2">, </span><span class="s1">stepmode</span><span class="s4">=</span><span class="s5">&quot;backward&quot;</span><span class="s2">),</span>
+                               <span class="s1">dict</span><span class="s2">(</span><span class="s1">step</span><span class="s4">=</span><span class="s5">&quot;all&quot;</span><span class="s2">)</span><span class="s6">]</span><span class="s2">), </span><span class="s1">bgcolor</span><span class="s4">=</span><span class="s5">'black'</span><span class="s2">, </span><span class="s1">bordercolor</span><span class="s4">=</span><span class="s5">'white'</span><span class="s2">, </span><span class="s1">borderwidth</span><span class="s4">=</span><span class="s7">1</span><span class="s2">),</span>
+                              <span class="s1">rangeslider</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span>
+                                  <span class="s1">visible</span><span class="s4">=</span><span class="s0">True</span><span class="s2">, </span><span class="s1">yaxis</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span>
+                                      <span class="s1">range</span><span class="s4">=</span><span class="s6">[</span><span class="s1">self</span><span class="s2">.</span><span class="s1">min_bid</span><span class="s2">, </span><span class="s1">self</span><span class="s2">.</span><span class="s1">max_ask</span><span class="s6">]</span><span class="s2">), </span><span class="s1">bgcolor</span><span class="s4">=</span><span class="s5">'rgb(28, 31, 33)'</span><span class="s2">), </span><span class="s1">type</span><span class="s4">=</span><span class="s5">'date'</span><span class="s2">),</span>
+                          <span class="s1">yaxis</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">fixedrange</span><span class="s4">=</span><span class="s0">False</span><span class="s2">),</span>
+                          <span class="s1">xaxis2</span><span class="s4">=</span><span class="s1">dict</span><span class="s2">(</span><span class="s1">range</span><span class="s4">=</span><span class="s6">[</span><span class="s1">self</span><span class="s2">.</span><span class="s1">min_bid</span><span class="s2">, </span><span class="s1">self</span><span class="s2">.</span><span class="s1">max_ask</span><span class="s6">]</span><span class="s2">),</span>
+                          <span class="s1">legend_title</span><span class="s4">=</span><span class="s5">'Click to Toggle'</span><span class="s2">)</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">update_xaxes</span><span class="s2">(</span><span class="s1">title_text</span><span class="s4">=</span><span class="s5">'Time Elapsed (hrs)'</span><span class="s2">,</span>
+                         <span class="s1">gridcolor</span><span class="s4">=</span><span class="s5">'rgb(28, 31, 33)'</span><span class="s2">,</span>
+                         <span class="s1">ticks</span><span class="s4">=</span><span class="s5">'outside'</span><span class="s2">,</span>
+                         <span class="s1">tickcolor</span><span class="s4">=</span><span class="s5">'white'</span><span class="s2">,</span>
+                         <span class="s1">tickvals</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">corresponding_ms_increments</span><span class="s2">,</span>
+                         <span class="s1">ticktext</span><span class="s4">=</span><span class="s1">self</span><span class="s2">.</span><span class="s1">elapsed_three_hr_labels</span><span class="s2">)</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">update_yaxes</span><span class="s2">(</span><span class="s1">title_text</span><span class="s4">=</span><span class="s5">'Price / MTM PnL (USD)'</span><span class="s2">,</span>
+                                    <span class="s1">gridcolor</span><span class="s4">=</span><span class="s5">'rgb(28, 31, 33)'</span><span class="s2">,</span>
+                                    <span class="s1">tickprefix</span><span class="s4">=</span><span class="s5">'$'</span><span class="s2">,</span>
+                                    <span class="s1">ticks</span><span class="s4">=</span><span class="s5">'outside'</span><span class="s2">,</span>
+                                    <span class="s1">tickcolor</span><span class="s4">=</span><span class="s5">'white'</span><span class="s2">,</span>
+                                    <span class="s1">secondary_y</span><span class="s4">=</span><span class="s0">False</span><span class="s2">)</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">update_yaxes</span><span class="s2">(</span><span class="s1">title_text</span><span class="s4">=</span><span class="s5">'Agg. Markout (USD)'</span><span class="s2">,</span>
+                                    <span class="s1">gridcolor</span><span class="s4">=</span><span class="s5">'rgb(28, 31, 33)'</span><span class="s2">,</span>
+                                    <span class="s1">tickprefix</span><span class="s4">=</span><span class="s5">'$'</span><span class="s2">,</span>
+                                    <span class="s1">ticks</span><span class="s4">=</span><span class="s5">'outside'</span><span class="s2">,</span>
+                                    <span class="s1">tickcolor</span><span class="s4">=</span><span class="s5">'white'</span><span class="s2">,</span>
+                                    <span class="s1">secondary_y</span><span class="s4">=</span><span class="s0">True</span><span class="s2">)</span>
+        <span class="s1">fig</span><span class="s2">.</span><span class="s1">show</span><span class="s2">()</span>
+
+
+<span class="s3"># Instantiate all graphs</span>
+<span class="s3">#bta_graph = Grapher(bta_md_df, bta_trades_df, 'BTA')</span>
+<span class="s3">#gmma_graph = Grapher(gmma_md_df, gmma_trades_df, 'GMMA')</span>
+<span class="s3">#lmda_graph = Grapher(lmda_md_df, lmda_trades_df, 'LMDA')</span>
+<span class="s1">zta_graph </span><span class="s4">= </span><span class="s1">Grapher</span><span class="s2">(</span><span class="s1">zta_md_df</span><span class="s2">, </span><span class="s1">zta_trades_df</span><span class="s2">, </span><span class="s5">'ZTA'</span><span class="s2">)</span>
+
+<span class="s3"># Plot all graphs</span>
+<span class="s3">#bta_graph.plot_md_trades()</span>
+<span class="s3">#gmma_graph.plot_md_trades()</span>
+<span class="s3">#lmda_graph.plot_md_trades()</span>
+<span class="s1">zta_graph</span><span class="s2">.</span><span class="s1">plot_md_trades</span><span class="s2">()</span>
+
+</pre>
+</body>
+</html>
