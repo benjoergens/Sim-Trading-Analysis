@@ -129,10 +129,9 @@ class Grapher:
         for i in tqdm(range(1, len(mtm_data)), colour='blue',
                       desc='Computing ' + self.instrument_name + ' MTM PnL Curve'):
             prev_agg_pos_size = mtm_data[i - 1][3]
-            # Mark to mid, or mark to bid/ask? Practically, it may be easier to mark to mid and add on reserve
-            # for bid-offer (as many banks/fx traders do), especially if dealing with complex derivatives.
-            # Here, given simple long/short positions, and the availability of bids/asks, mark to bid/ask should provide
-            # more realistic and 'conservative' mtm_pnl figures.
+            # Mark to mid range, or mark to bid/ask? Practically, it may be easier to mark to mid & add on reserve
+            # for bid-offer, especially if dealing with complex derivatives. Here, given simple long/short positions, 
+            # and availability of bids/asks, mark to bid/ask should provide more realistic & 'conservative' mtm_pnl figures.
             if prev_agg_pos_size > 0:
                 mtm_pnl = prev_agg_pos_size * (mtm_data[i][1] - mtm_data[i - 1][1])
             elif prev_agg_pos_size < 0:
@@ -141,7 +140,10 @@ class Grapher:
                 mtm_pnl = 0
             mtm_pnl_data.append([mtm_data[i][0], mtm_pnl + mtm_pnl_data[-1][1]])
         self.mtm_pnl = list(map(itemgetter(1), mtm_pnl_data))
-        '''pnl_sum = 0
+        
+        '''
+        Volatility Calculations:
+        pnl_sum = 0
         pnl_count = 0
         for i in range(len(self.mtm_pnl)):
             pnl_sum += self.mtm_pnl[i]
@@ -154,7 +156,8 @@ class Grapher:
         print(dif_sum)
         print(pnl_count)
         vol = math.sqrt(dif_sum / pnl_count)
-        print('Strat vol: ', vol)'''
+        print('Strat vol: ', vol)
+        '''
 
         # Calculate margin curve
         # Create df with trade times and buy/sell_px columns
