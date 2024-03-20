@@ -129,9 +129,9 @@ class Grapher:
         for i in tqdm(range(1, len(mtm_data)), colour='blue',
                       desc='Computing ' + self.instrument_name + ' MTM PnL Curve'):
             prev_agg_pos_size = mtm_data[i - 1][3]
-            # Mark to mid range, or mark to bid/ask? Practically, it may be easier to mark to mid & add on reserve
+            # Mark to mid range / mark to bid/ask? Practically easier to mark to mid & add on reserve
             # for bid-offer, especially if dealing with complex derivatives. Here, given simple long/short positions, 
-            # and availability of bids/asks, mark to bid/ask should provide more realistic & 'conservative' mtm_pnl figures.
+            # and availability of bids/asks, mark to bid/ask provides more realistic / 'conservative' mtm_pnl figures.
             if prev_agg_pos_size > 0:
                 mtm_pnl = prev_agg_pos_size * (mtm_data[i][1] - mtm_data[i - 1][1])
             elif prev_agg_pos_size < 0:
