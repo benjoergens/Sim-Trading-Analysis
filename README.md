@@ -1,7 +1,7 @@
 # Sim-Trading-Analysis
 Simulated FX Post-Trade Analysis Project:
 
-This project uses Plotly to chart Buys and Sells (from _trades.csv files), Bids and Asks (from _md.csv files), Aggregate Mark-Out curves, and Mark-to-Market PnL curves for four different hypothetical FX instruments (BTA, GMMA, LMDA, and ZTA) over 48hrs in 100 ms intervals.
+This project uses Plotly and Pandas to calculate/chart Buys and Sells (from _trades.csv files), Bids and Asks (from _md.csv files), Aggregate Mark-Out curves, and Mark-to-Market PnL curves for four different hypothetical FX instruments (BTA, GMMA, LMDA, and ZTA) over 48hrs in 100 ms intervals.
 
 See Python code in Sim_Trading.py. The market dataset (_md.csv files) for each of the four hypothetical instruments is large (>1.7M rows of bid/ask prices for the 100 millisecond horizon ticks), and has been compressed and attached as .zip files.
 
