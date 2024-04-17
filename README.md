@@ -7,33 +7,3 @@ See Python code in Sim_Trading.py. The market dataset (_md.csv files) for each o
 
 Example Output for BTA:
 <img width="1494" alt="Screenshot 2024-03-11 at 6 07 06 PM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/13393726-7ed5-4eec-94db-0a70b2d5fcfd">
-
-BTA 1-hr lookback, bid and ask curves + buy and sells:
-
-
-BTA Aggregate Markout Curve:
-
-
-
-
-LMMDA 1-hr lookback, bid and ask curves + buy and sells:
-
-
-LMDA Aggregate Markout Curve:
-
-
-
-
-GMMA 1-hr lookback, bid and ask curves + buy and sells:
-
-
-GMMA Aggregate Markout Curve:
-
-
-
-
-ZTA 1-hr lookback, bid and ask curves + buy and sells:
-
-
-ZTA Aggregate Markout Curve:
-
