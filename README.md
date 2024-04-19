@@ -9,7 +9,9 @@ Example Output for BTA:
 <img width="1494" alt="Screenshot 2024-03-11 at 6 07 06 PM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/13393726-7ed5-4eec-94db-0a70b2d5fcfd">
 
 BTA 1-hr Buys/Sells and Bid/Ask Curve Look-Back:
+
 <img width="1009" alt="Screenshot 2024-04-19 at 10 35 31 AM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/6f2ce7f6-0b62-408a-a6c4-32a026779663">
 
 BTA 1-hr Agg. Mark-Out Curve Look-Back:
+
 <img width="1095" alt="Screenshot 2024-04-19 at 10 36 03 AM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/b33b2ffb-35c3-4cff-8144-f6508db43e71">
