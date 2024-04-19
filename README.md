@@ -8,10 +8,8 @@ See Python code in Sim_Trading.py. The market dataset (_md.csv files) for each o
 Example Output for BTA:
 <img width="1494" alt="Screenshot 2024-03-11 at 6 07 06 PM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/13393726-7ed5-4eec-94db-0a70b2d5fcfd">
 
-<img width="1047" alt="Screenshot 2024-04-19 at 10 28 51 AM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/d685f191-8a42-440b-b4f5-9c4332b06b9b">
+BTA 1-hr Buys/Sells and Bid/Ask Curve Look-Back:
+<img width="1009" alt="Screenshot 2024-04-19 at 10 35 31 AM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/6f2ce7f6-0b62-408a-a6c4-32a026779663">
 
-<img width="1047" alt="Screenshot 2024-04-19 at 10 27 57 AM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/7220c008-c52c-4bee-a050-e1dc048f1bde">
-
-<img width="1047" alt="Screenshot 2024-04-19 at 10 28 28 AM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/5284c9d3-f13e-4b1c-97b6-99480a89bf23">
-
-<img width="1047" alt="Screenshot 2024-04-19 at 10 29 14 AM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/cba3caa4-1603-4a8e-9ae2-2127ea8fa721">
+BTA 1-hr Agg. Mark-Out Curve Look-Back:
+<img width="1095" alt="Screenshot 2024-04-19 at 10 36 03 AM" src="https://github.com/benjoergens/Sim-Trading-Analysis/assets/59835387/b33b2ffb-35c3-4cff-8144-f6508db43e71">
